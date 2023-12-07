@@ -1,0 +1,7 @@
+/node_modules
+/src/credentials.json
+/dist/credentials.json
+/dist/token.json
+/dist/user.json
+.gcloudignore
+/package-lock.json
