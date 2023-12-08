@@ -21,9 +21,9 @@ app.use(auth_middleware_1.authMiddleware);
 // gmail api routes
 app.use('/api', apiRoutes);
 // start the server
-const PORT = 5000;
+/*const PORT = 8080;
 app.listen(PORT, () => {
     console.log(`App listening on port ${PORT}`);
-});
+});*/
 Cloud.http('GmailApi', app);
 //# sourceMappingURL=index.js.map
