@@ -16,10 +16,15 @@ const mailSchema = new Schema({
     user: {
         type: 'string',
     },
-    internalDate: {
-        type: 'number'
+    date: {
+        type: 'string'
     },
-
+    from: {
+        type: 'string'
+    },
+    subject:{
+        type: 'string',
+    }
 },{
     timestamps: {
         createdAt: 'created_at',

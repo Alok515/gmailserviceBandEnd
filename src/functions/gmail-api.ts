@@ -22,7 +22,11 @@ const getMail = async () => {
     }
 }
 
-const saveUser = async (user) => {
+type userId = {
+    email: string;
+}
+
+const saveUser = async (user:userId) => {
     await fs.writeFile(User_PATH, JSON.stringify(user))
 }
 
@@ -36,20 +40,8 @@ export const getMessages = async (params) => {
         const messageResponse = await getMessage({ messageId: message.id })
         return parseMessage(messageResponse)
     }))
-    const userMail = String(getMail());
-    messages.map((message) => {
-        Mail.findOne({ m_id: message.id })
-            .then((mail) => {
-                if (mail === undefined || mail === null) {
-                    Mail.create({
-                        m_id: message.id,
-                        snippet: message.snippet,
-                        user: userMail,
-                        internalDate: message.internalDate
-                    });
-                }
-            });
-    });
+    const userMail = await getMail();
+    
     const newData = await Promise.all(messages.map(async mail=>{
         const response = await gmail.users.messages.get({ id: mail.id, userId: 'me' });
         const newMessage = await parseMessage(response.data);
@@ -64,6 +56,21 @@ export const getMessages = async (params) => {
         })
     }));
     
+    await Promise.all(newData.map((message) => {
+        Mail.findOne({ m_id: message.id })
+            .then((mail) => {
+                if (mail === undefined || mail === null) {
+                    Mail.create({
+                        m_id: message.id,
+                        snippet: message.snippet,
+                        user: userMail,
+                        date: message.date,
+                        from: message.from,
+                        subject: message.subject,
+                    });
+                }
+            });
+    }));
     //console.log(newData[0]);
 
     return newData;
@@ -150,7 +157,7 @@ export const getThread = async ({ messageId }) => {
  */
 export const sendMessage = async ({ to, subject = '', text = '', attachments = [] }: { to: string, subject?: string, text?: string, attachments?: any[] }) => {
 
-    const userMail = String(getMail());
+    const userMail = await getMail();
     // build and encode the mail
     await Sent.create({
         toMail: to,

@@ -5,23 +5,27 @@ const googleapis_1 = require("googleapis");
 const fs = require("fs-extra");
 const path = require("path");
 const credentials = require("../credentials.json");
-const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/gmail.modify', 'https://www.googleapis.com/auth/gmail.compose', 'https://www.googleapis.com/auth/gmail.send'];
+const useToken = require("../schema/token");
+const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/gmail.modify', 'https://www.googleapis.com/auth/gmail.compose', 'https://www.googleapis.com/auth/gmail.send', 'https://mail.google.com'];
 const TOKEN_PATH = path.join(__dirname, '../token.json');
 const User_PATH = path.join(__dirname, '../user.json');
 const authorize = async () => {
     // check if the token already exists
-    const exists = await fs.exists(TOKEN_PATH);
-    const token = exists ? await fs.readFile(TOKEN_PATH, 'utf8') : '';
+    const exists = await useToken.Token.findOne({
+        check: 1
+    });
+    const token = exists ? exists.token : '';
     if (token) {
-        authenticate(JSON.parse(token));
+        authenticate(token);
         return true;
     }
     return false;
 };
 exports.authorize = authorize;
 const logout = async () => {
-    fs.unlink(TOKEN_PATH);
-    fs.unlink(User_PATH);
+    await useToken.Token.findOneAndDelete({
+        check: 1
+    });
 };
 exports.logout = logout;
 const getNewToken = async () => {
