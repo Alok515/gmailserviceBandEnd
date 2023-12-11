@@ -13,7 +13,7 @@ router.get('/gmailAuth', async (req: express.Request, res: express.Response) => 
         const authenticated = await auth.authorize()
 
         // if not authenticated, request new token
-        if(true){
+        if(!authenticated){
             const authorizeUrl = await auth.getNewToken()
             return res.json({
                 msg: "Not authenticated",
@@ -40,9 +40,9 @@ router.get('/callback', async (req: express.Request, res: express.Response) => {
         const result = await oAuth2Client.getToken(code)
         const tokens = result.tokens
 
-        /*await token.Token.create({
+        await token.Token.create({
             token: tokens
-        });*/
+        });
 
         console.log('Successfully authorized')
         return res.send(`<script>window.location.href="http://localhost:5173/auth";
