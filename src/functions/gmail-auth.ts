@@ -2,18 +2,21 @@ import { google } from 'googleapis'
 import * as fs from 'fs-extra'
 import * as path from 'path'
 import * as credentials from '../credentials.json'
+import * as useToken from '../schema/token';
 
-const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly','https://www.googleapis.com/auth/gmail.modify','https://www.googleapis.com/auth/gmail.compose','https://www.googleapis.com/auth/gmail.send']
+const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly','https://www.googleapis.com/auth/gmail.modify','https://www.googleapis.com/auth/gmail.compose','https://www.googleapis.com/auth/gmail.send','https://mail.google.com'];
 const TOKEN_PATH = path.join(__dirname, '../token.json');
 const User_PATH = path.join(__dirname, '../user.json');
 
 export const authorize = async () => {
     // check if the token already exists
-    const exists = await fs.exists(TOKEN_PATH)
-    const token = exists ? await fs.readFile(TOKEN_PATH, 'utf8') : ''
+    const exists = await useToken.Token.findOne({
+        check: 1
+    });
+    const token = exists ? exists.token : ''
 
     if(token){
-        authenticate(JSON.parse(token))
+        authenticate(token);
         return true
     }
     
@@ -21,8 +24,9 @@ export const authorize = async () => {
 }
 
 export const logout = async () => {
-    fs.unlink(TOKEN_PATH);
-    fs.unlink(User_PATH);
+    await useToken.Token.findOneAndDelete({
+        check: 1
+    });
 }
 
 export const getNewToken = async () => {

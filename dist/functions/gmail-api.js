@@ -15,7 +15,7 @@ const getMail = async () => {
     const exists = await fs.exists(User_PATH);
     const token = exists ? await fs.readFile(User_PATH, 'utf8') : '';
     if (token) {
-        const user = JSON.parse(token);
+        const user = await JSON.parse(token);
         return user.email;
     }
 };
@@ -32,8 +32,22 @@ const getMessages = async (params) => {
         const messageResponse = await (0, exports.getMessage)({ messageId: message.id });
         return parseMessage(messageResponse);
     }));
-    const userMail = getMail();
-    messages.map((message) => {
+    const userMail = await getMail();
+    const newData = await Promise.all(messages.map(async (mail) => {
+        var _a, _b, _c;
+        const response = await gmail.users.messages.get({ id: mail.id, userId: 'me' });
+        const newMessage = await parseMessage(response.data);
+        return ({
+            id: newMessage.id,
+            label: newMessage.labelIds,
+            snippet: newMessage.snippet,
+            subject: (_a = newMessage.headers) === null || _a === void 0 ? void 0 : _a.subject,
+            from: (_b = newMessage.headers) === null || _b === void 0 ? void 0 : _b.from,
+            date: (_c = newMessage.headers) === null || _c === void 0 ? void 0 : _c.date,
+            textPlain: newMessage.textPlain
+        });
+    }));
+    await Promise.all(newData.map((message) => {
         mail_1.default.findOne({ m_id: message.id })
             .then((mail) => {
             if (mail === undefined || mail === null) {
@@ -41,12 +55,15 @@ const getMessages = async (params) => {
                     m_id: message.id,
                     snippet: message.snippet,
                     user: userMail,
-                    internalDate: message.internalDate
+                    date: message.date,
+                    from: message.from,
+                    subject: message.subject,
                 });
             }
         });
-    });
-    return messages;
+    }));
+    //console.log(newData[0]);
+    return newData;
 };
 exports.getMessages = getMessages;
 /**
@@ -128,7 +145,7 @@ exports.getThread = getThread;
  * @param  {Array}  attachments An array of attachments
  */
 const sendMessage = async ({ to, subject = '', text = '', attachments = [] }) => {
-    const userMail = getMail();
+    const userMail = await getMail();
     // build and encode the mail
     await sent_1.default.create({
         toMail: to,
